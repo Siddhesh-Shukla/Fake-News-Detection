@@ -29,16 +29,19 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 parser = ArgumentParser()
 parser.add_argument('-num_labels', action="store", dest="num_labels", type=int)
+parser.add_argument('-num_epochs', action="store", dest="num_epochs", type=int)
+parser.add_argument('-load_model', action="store", dest="load_model", type=bool)
 args = parser.parse_args()
 
 num_labels = args.num_labels
+num_epochs = args.num_epochs
+load_model = args.load_model
 
 #home = str(Path.home())
 
 train_path = './LIAR-PLUS/dataset/train2.tsv'
 test_path = './LIAR-PLUS/dataset/test2.tsv'
 val_path = './LIAR-PLUS/dataset/val2.tsv'
-
 
 train_df = pd.read_csv(train_path, sep="\t", header=None)
 test_df = pd.read_csv(test_path, sep="\t", header=None)
@@ -349,9 +352,9 @@ from pytorch_pretrained_bert import BertConfig
 config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
         num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
-
 model = BertForSequenceClassification(num_labels)
-
+if(load_model):
+    model.load_state_dict(torch.load('triBERT_model_epoch.pth'))
 
 # Loading the statements
 X_train = statements['train']
@@ -512,7 +515,7 @@ val_acc = []
 train_loss = []
 val_loss = []
 
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+def train_model(model, criterion, optimizer, scheduler, num_epochs=15):
     since = time.time()
     print('starting')
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -614,7 +617,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 val_loss.append(epoch_loss)
 
                 best_model_wts = copy.deepcopy(model.state_dict())
-                torch.save(model.state_dict(), 'bert_model_test_noFC1_triBERT_binary_focalloss.pth')
+                torch.save(model.state_dict(), 'triBERT_model_epoch.pth')
 
         print('Time taken for epoch'+ str(epoch+1)+ ' is ' + str((time.time() - epoch_start)/60) + ' minutes')
         print()
@@ -652,7 +655,7 @@ criterion = focal_loss.FocalLoss(*loss_args)'''
 # Decay LR by a factor of 0.1 every 3 epochs
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=3, gamma=0.1)
 
-model_ft1, train_acc, val_acc, train_loss, val_loss = train_model(model, criterion, optimizer_ft, exp_lr_scheduler,num_epochs=3)
+model_ft1, train_acc, val_acc, train_loss, val_loss = train_model(model, criterion, optimizer_ft, exp_lr_scheduler,num_epochs=num_epochs)
 
 # Accuracy plots
 
