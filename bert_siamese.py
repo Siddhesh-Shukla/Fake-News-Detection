@@ -1,17 +1,8 @@
 import torch
-from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
-
-# OPTIONAL: if you want to have more information on what's happening, activate the logger as follows
-import logging
-logging.basicConfig(level=logging.INFO)
-
-# Load pre-trained model tokenizer (vocabulary)
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-
-import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
+from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
 import numpy as np
 import torchvision
 from torchvision import datasets, models, transforms
@@ -28,6 +19,13 @@ from pathlib import Path
 from matplotlib import pyplot as plt
 from argparse import ArgumentParser
 import sys
+
+# to have more information on what's happening
+import logging
+logging.basicConfig(level=logging.INFO)
+
+# Load pre-trained model tokenizer (vocabulary)
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
 parser = ArgumentParser()
 parser.add_argument('-num_labels', action="store", dest="num_labels", type=int)
@@ -393,22 +391,6 @@ X_train_credit = X_train_credit+X_val_credit
 X_test_credit = credit_score['test']
 
 
-# Small data partitioned for debugging
-'''X_train = X_train[:100]
-y_train = y_train[:100]
-
-X_test = X_test[:100]
-y_test = y_test[:100]
-
-X_train_just = X_train_just[:100]
-X_test_just = X_test_just[:100]
-
-X_train_meta = X_train_meta[:100]
-X_test_meta = X_test_meta[:100]
-
-X_train_credit = X_train_credit[:100]
-X_test_credit = X_test_credit[:100]'''
-
 max_seq_length_stat = 64
 max_seq_length_just = 256
 max_seq_length_meta = 32
@@ -670,8 +652,7 @@ criterion = focal_loss.FocalLoss(*loss_args)'''
 # Decay LR by a factor of 0.1 every 3 epochs
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=3, gamma=0.1)
 
-
-model_ft1, train_acc, val_acc, train_loss, val_loss = train_model(model, criterion, optimizer_ft, exp_lr_scheduler,num_epochs=20)
+model_ft1, train_acc, val_acc, train_loss, val_loss = train_model(model, criterion, optimizer_ft, exp_lr_scheduler,num_epochs=3)
 
 # Accuracy plots
 
