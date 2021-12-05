@@ -2,23 +2,20 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
-from pytorch_pretrained_bert import BertTokenizer, BertModel, BertForMaskedLM
-import numpy as np
-import torchvision
-from torchvision import datasets, models, transforms
+from pytorch_pretrained_bert import BertTokenizer, BertModel
 import matplotlib.pyplot as plt
 import time
-import os
 import copy
 from torch.utils.data import Dataset, DataLoader
-from PIL import Image
-from random import randrange
 import torch.nn.functional as F
 import pandas as pd
-from pathlib import Path
 from matplotlib import pyplot as plt
 from argparse import ArgumentParser
 import sys
+import numpy as np
+import sklearn.metrics
+import seaborn as sb
+import tensorflow as tf
 
 # to have more information on what's happening
 import logging
@@ -353,8 +350,6 @@ config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
         num_hidden_layers=12, num_attention_heads=12, intermediate_size=3072)
 
 model = BertForSequenceClassification(num_labels)
-if(load_model):
-    model.load_state_dict(torch.load('triBERT.pth'))
 
 # Loading the statements
 X_train = statements['train']
@@ -363,9 +358,8 @@ y_train = labels_onehot['train']
 X_val = statements['val']
 y_val = labels_onehot['val']
 
-X_train = X_train + X_val
-y_train = y_train + y_val
-
+# X_train = X_train + X_val
+# y_train = y_train + y_val
 
 X_test = statements['test']
 y_test = labels_onehot['test']
@@ -375,7 +369,7 @@ X_train_just = justification['train']
 
 X_val_just = justification['val']
 
-X_train_just = X_train_just + X_val_just
+# X_train_just = X_train_just + X_val_just
 
 X_test_just = statements['test']
 
@@ -383,14 +377,14 @@ X_test_just = statements['test']
 # Loading the meta data
 X_train_meta = metadata['train']
 X_val_meta = metadata['val']
-X_train_meta = X_train_meta + X_val_meta
+# X_train_meta = X_train_meta + X_val_meta
 X_test_meta = metadata['test']
 
 # Loading Credit scores
 
 X_train_credit = credit_score['train']
 X_val_credit = credit_score['val']
-X_train_credit = X_train_credit+X_val_credit
+# X_train_credit = X_train_credit+X_val_credit
 X_test_credit = credit_score['test']
 
 
@@ -492,20 +486,25 @@ batch_size = 16
 # Train Statements and Justifications
 train_lists = [X_train, X_train_just, X_train_meta, X_train_credit, y_train]
 
+# Validation Statements and Justifications
+val_lists = [X_val, X_val_just, X_val_meta, X_val_credit, y_val]
+
 # Test Statements and Justifications
 test_lists = [X_test, X_test_just, X_train_meta, X_test_credit, y_test]
 
 # Preparing the data (Tokenize)
 training_dataset = text_dataset(x_y_list = train_lists)
+val_dataset = text_dataset(x_y_list = val_lists)
 test_dataset = text_dataset(x_y_list = test_lists)
 
-
 # Prepare the training dictionaries
-dataloaders_dict = {'train': torch.utils.data.DataLoader(training_dataset, batch_size=batch_size, shuffle=True, num_workers=0),
-                   'val':torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+dataloaders_dict = {'train': DataLoader(training_dataset, batch_size=batch_size, shuffle=True, num_workers=0),
+                   'val': DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0),
+                   'test': DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0) 
                    }
 dataset_sizes = {'train':len(train_lists[0]),
-                'val':len(test_lists[0])}
+                'val':len(val_lists[0]),
+                'test':len(test_lists[0])}
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -514,6 +513,51 @@ train_acc = []
 val_acc = []
 train_loss = []
 val_loss = []
+
+def test_model(model):
+    inputs, fakeness = dataloaders_dict['test']
+
+    inputs1 = inputs[0] # News statement input
+    inputs2 = inputs[1] # Justification input
+    inputs3 = inputs[2] # Meta data input
+    inputs4 = inputs[3] # Credit scores input
+
+    inputs1 = inputs1.to(device)
+    inputs2 = inputs2.to(device)
+    inputs3 = inputs3.to(device)
+    inputs4 = inputs4.to(device)
+
+    fakeness = fakeness.to(device)
+
+    predictions = np.argmax(F.softmax(model(inputs1, inputs2, inputs3, inputs4)), axis = 1)
+    cnf_mat = tf.math.confusion_matrix(y_test, predictions, num_classes = num_labels)
+    predictions_oh = tf.one_hot(predictions, depth = num_labels).numpy()
+    y_test_oh = tf.one_hot(y_test, depth = num_labels).numpy()
+
+    #PLOTTING CONFUSION MATRIX
+    fig, a = plt.subplots(1,1,figsize = (6,5))
+    a = sb.heatmap(cnf_mat, annot = True, fmt = "g", cmap = "Blues")
+    plt.title(f"CONFUSION MATRIX ({dataset_sizes['test']} samples)")
+    plt.ylabel("True labels")
+    plt.xlabel("Predicted labels")
+    plt.show()
+
+    Precision = sklearn.metrics.precision_score(y_test_oh, predictions_oh, average = "weighted")
+    Recall = sklearn.metrics.recall_score(y_test_oh, predictions_oh, average = "weighted")
+    F1_score = sklearn.metrics.f1_score(y_test_oh, predictions_oh, average = "weighted")
+    AUC_ROC = sklearn.metrics.roc_auc_score(y_test_oh, predictions_oh, average = "weighted")
+    Accuracy = sklearn.metrics.accuracy_score(y_test_oh, predictions_oh)
+
+    print(f"Precision     : {round(Precision,6)}")
+    print(f"Recall        : {round(Recall,6)}")
+    print(f"F1 Score      : {round(F1_score,6)}")
+    print(f"AUC-ROC Score : {round(AUC_ROC,6)}")
+    print(f"Accuracy      : {round(Accuracy*100,4)}%")
+
+if(load_model):
+    model.load_state_dict(torch.load('triBERT.pth'))
+    test_model(model)
+
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs=15):
     since = time.time()
