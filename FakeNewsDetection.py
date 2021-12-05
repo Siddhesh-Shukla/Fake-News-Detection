@@ -354,7 +354,7 @@ config = BertConfig(vocab_size_or_config_json_file=32000, hidden_size=768,
 
 model = BertForSequenceClassification(num_labels)
 if(load_model):
-    model.load_state_dict(torch.load('triBERT_model_epoch.pth'))
+    model.load_state_dict(torch.load('triBERT.pth'))
 
 # Loading the statements
 X_train = statements['train']
@@ -617,7 +617,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=15):
                 val_loss.append(epoch_loss)
 
                 best_model_wts = copy.deepcopy(model.state_dict())
-                torch.save(model.state_dict(), 'triBERT_model_epoch.pth')
+                torch.save(model.state_dict(), 'triBERT.pth')
 
         print('Time taken for epoch'+ str(epoch+1)+ ' is ' + str((time.time() - epoch_start)/60) + ' minutes')
         print()
