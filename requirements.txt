@@ -4,7 +4,6 @@ Keras
 Keras-Applications
 Keras-Preprocessing
 matplotlib
-numpy==1.15.4
 nvidia-ml-py
 pandas
 python-apt
@@ -20,9 +19,4 @@ scipy
 seaborn==0.9.0
 six
 sympy==1.4
-tensorboard
-tensorflow-estimator
-tensorflow-gpu==2.7.0
-torch==1.1.0
-torchvision==0.3.0
 tqdm
