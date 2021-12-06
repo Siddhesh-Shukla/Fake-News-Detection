@@ -515,21 +515,37 @@ train_loss = []
 val_loss = []
 
 def test_model(model):
-    inputs, fakeness = dataloaders_dict['test']
+    outputs = []
+    fakeness_corrects = 0
+    total_examples = 0
+    print(f"Dataloader : {dataloaders_dict['test']} ")
+    for inputs, fakeness in dataloaders_dict['test']:
 
-    inputs1 = inputs[0] # News statement input
-    inputs2 = inputs[1] # Justification input
-    inputs3 = inputs[2] # Meta data input
-    inputs4 = inputs[3] # Credit scores input
+        inputs1 = inputs[0] # News statement input
+        inputs2 = inputs[1] # Justification input
+        inputs3 = inputs[2] # Meta data input
+        inputs4 = inputs[3] # Credit scores input
 
-    inputs1 = inputs1.to(device)
-    inputs2 = inputs2.to(device)
-    inputs3 = inputs3.to(device)
-    inputs4 = inputs4.to(device)
+        print(f"New statement input : {inputs1}")
+        print(f"Justification input : {inputs2}")
+        print(f"Meta data input : {inputs3}")
+        print(f"Credit scores input : {inputs4}")
+        print(f"Fakeness : {fakeness}")
+        
+        inputs1 = inputs1.to(device)
+        inputs2 = inputs2.to(device)
+        inputs3 = inputs3.to(device)
+        inputs4 = inputs4.to(device)
 
-    fakeness = fakeness.to(device)
+        fakeness = fakeness.to(device)
+        output = F.softmax(model(inputs1, inputs2, inputs3, inputs4))
+        print(f"Our output : {output}")
+        outputs.append(output)
+        total_examples += 1
+        fakeness_corrects += torch.sum(torch.max(outputs, 1)[1] == torch.max(fakeness, 1)[1])
 
-    predictions = np.argmax(F.softmax(model(inputs1, inputs2, inputs3, inputs4)), axis = 1)
+    print(f"Total number of examples = {total_examples}")
+    predictions = torch.max(outputs, 1)[1]
     cnf_mat = tf.math.confusion_matrix(y_test, predictions, num_classes = num_labels)
     predictions_oh = tf.one_hot(predictions, depth = num_labels).numpy()
     y_test_oh = tf.one_hot(y_test, depth = num_labels).numpy()
@@ -613,7 +629,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=15):
                     loss = criterion(outputs, torch.max(fakeness.float(), 1)[1])
                     # backward + optimize only if in training phase
                     if phase == 'train':
-
                         loss.backward()
                         optimizer.step()
 
