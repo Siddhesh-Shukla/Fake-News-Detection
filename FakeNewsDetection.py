@@ -27,13 +27,14 @@ tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 parser = ArgumentParser()
 parser.add_argument('-num_labels', action="store", dest="num_labels", type=int)
 parser.add_argument('-num_epochs', action="store", dest="num_epochs", type=int)
-parser.add_argument('-load_model', action="store", dest="load_model", type=bool)
+parser.add_argument('-load_model', action="store", dest="load_model", type=str)
 args = parser.parse_args()
 
 num_labels = args.num_labels
 num_epochs = args.num_epochs
 load_model = args.load_model
 
+load_model = not load_model=="False"
 #home = str(Path.home())
 
 train_path = './LIAR-PLUS/dataset/train2.tsv'
@@ -515,24 +516,42 @@ train_loss = []
 val_loss = []
 
 def test_model(model):
-    inputs, fakeness = dataloaders_dict['test']
+    outputs = []
+    fakenesses = []
+    total_examples = 0
+    print(f"Dataloader : {dataloaders_dict['test']} ")
+    for inputs, fakeness in dataloaders_dict['test']:
 
-    inputs1 = inputs[0] # News statement input
-    inputs2 = inputs[1] # Justification input
-    inputs3 = inputs[2] # Meta data input
-    inputs4 = inputs[3] # Credit scores input
+        inputs1 = inputs[0] # News statement input
+        inputs2 = inputs[1] # Justification input
+        inputs3 = inputs[2] # Meta data input
+        inputs4 = inputs[3] # Credit scores input
 
-    inputs1 = inputs1.to(device)
-    inputs2 = inputs2.to(device)
-    inputs3 = inputs3.to(device)
-    inputs4 = inputs4.to(device)
+        inputs1 = inputs1.to(device)
+        inputs2 = inputs2.to(device)
+        inputs3 = inputs3.to(device)
+        inputs4 = inputs4.to(device)
 
-    fakeness = fakeness.to(device)
+        # fakeness = fakeness.to(device)
+        output = torch.argmax(F.softmax(model(inputs1, inputs2, inputs3, inputs4)), 1)
+        # print(f"Our output : {output}")
+        outputs.append(output)
+        fakenesses.append(torch.argmax(fakeness, 1))
+        total_examples += batch_size
 
-    predictions = np.argmax(F.softmax(model(inputs1, inputs2, inputs3, inputs4)), axis = 1)
-    cnf_mat = tf.math.confusion_matrix(y_test, predictions, num_classes = num_labels)
-    predictions_oh = tf.one_hot(predictions, depth = num_labels).numpy()
-    y_test_oh = tf.one_hot(y_test, depth = num_labels).numpy()
+    outputs = torch.cat(outputs, dim = 0)
+    outputs = outputs.cpu()
+    fakenesses = torch.cat(fakenesses, dim = 0)
+    fakeness_corrects = torch.sum(outputs == fakenesses)
+    print(fakeness_corrects.cpu())
+    print(total_examples)
+
+    outputs = tf.convert_to_tensor(outputs.numpy())
+    fakenesses = tf.convert_to_tensor(fakenesses.numpy())
+
+    cnf_mat = tf.math.confusion_matrix(fakenesses, outputs, num_classes = num_labels)
+    predictions_oh = tf.one_hot(outputs, depth = num_labels).numpy()
+    y_test_oh = tf.one_hot(fakenesses, depth = num_labels).numpy()
 
     #PLOTTING CONFUSION MATRIX
     fig, a = plt.subplots(1,1,figsize = (6,5))
@@ -540,6 +559,8 @@ def test_model(model):
     plt.title(f"CONFUSION MATRIX ({dataset_sizes['test']} samples)")
     plt.ylabel("True labels")
     plt.xlabel("Predicted labels")
+    plt.savefig('testfig.png')
+    
     plt.show()
 
     Precision = sklearn.metrics.precision_score(y_test_oh, predictions_oh, average = "weighted")
@@ -555,8 +576,12 @@ def test_model(model):
     print(f"Accuracy      : {round(Accuracy*100,4)}%")
 
 if(load_model):
+    print("Loading model...", end = "")
     model.load_state_dict(torch.load('triBERT.pth'))
+    print("Finished Loading.")
+    model.to(device)
     test_model(model)
+
 
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs=15):
@@ -613,7 +638,6 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=15):
                     loss = criterion(outputs, torch.max(fakeness.float(), 1)[1])
                     # backward + optimize only if in training phase
                     if phase == 'train':
-
                         loss.backward()
                         optimizer.step()
 
@@ -696,38 +720,38 @@ criterion = nn.CrossEntropyLoss()
 loss_args = {"alpha": 0.5, "gamma": 2.0}
 criterion = focal_loss.FocalLoss(*loss_args)'''
 
-# Decay LR by a factor of 0.1 every 3 epochs
-exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=3, gamma=0.1)
+if not load_model:
+    # Decay LR by a factor of 0.1 every 3 epochs
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=3, gamma=0.1)
+    model_ft1, train_acc, val_acc, train_loss, val_loss = train_model(model, criterion, optimizer_ft, exp_lr_scheduler,num_epochs=num_epochs)
 
-model_ft1, train_acc, val_acc, train_loss, val_loss = train_model(model, criterion, optimizer_ft, exp_lr_scheduler,num_epochs=num_epochs)
+    # Accuracy plots
 
-# Accuracy plots
+    print(val_acc)
+    print(val_loss)
 
-print(val_acc)
-print(val_loss)
+    #plt.plot(train_acc)
+    plt.plot(val_acc)
+    plt.title('Model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['val'], loc='upper left')
+    #plt.show()
+    plt.savefig('accuracy.png')
+    plt.close()
 
-#plt.plot(train_acc)
-plt.plot(val_acc)
-plt.title('Model accuracy')
-plt.ylabel('accuracy')
-plt.xlabel('epoch')
-plt.legend(['val'], loc='upper left')
-#plt.show()
-plt.savefig('accuracy.png')
-plt.close()
+    print('Saved Accuracy plot')
 
-print('Saved Accuracy plot')
+    # Loss plots
 
-# Loss plots
+    #plt.plot(train_loss)
+    plt.plot(val_loss)
+    plt.title('Model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['val'], loc='upper right')
+    #plt.show()
+    plt.savefig('loss.png')
+    plt.close()
 
-#plt.plot(train_loss)
-plt.plot(val_loss)
-plt.title('Model loss')
-plt.ylabel('loss')
-plt.xlabel('epoch')
-plt.legend(['val'], loc='upper right')
-#plt.show()
-plt.savefig('loss.png')
-plt.close()
-
-print('Saved Loss plot')
+    print('Saved Loss plot')
