@@ -1,2 +1,5 @@
-# Fake News Detection
-Fake news detection is a critical yet challenging problem in Natural Language Processing (NLP). The rapid rise of social networking platforms has not only yielded a vast increase in information accessibility but has also accelerated the spread of fake news. Thus, the effect of fake news has been growing, sometimes extending to the offline world and threatening public safety. As the Internet community and the speed of the spread of information are growing rapidly, automated fake news detection on internet content has gained interest in the Artificial Intelligence research community. Given the massive amount of Web content, automatic fake news detection is a practical NLP problem useful to all online content providers, in order to reduce the human time and effort to detect and prevent the spread of fake news. 
+# Automated Fake News Detection
+## Dataset used: LIAR PLUS
+### 6-way classification: mostly true, half true counts, barely true, false, pants on fire
+
+![alt text](https://github.com/Siddhesh-Shukla/Fake-News-Detection/blob/main/Images/Screenshot%202021-12-24%20113507.png)
