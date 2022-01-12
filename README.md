@@ -1,17 +1,19 @@
 # Automated Fake News Detection
 ### Tri-BERT Siamese Model <br>
-Siamese Network with 3 branches containing BERT as base model <br>
-Dataset used: **LIAR PLUS** <br>
-> **Inputs** <br>
-> 1st Branch - News Statement <br>
-> 2nd Branch - Justification <br>
-> 3rd Branch - other columns from data such as author, source, etc
+&nbsp;&nbsp;&nbsp;&nbsp; Siamese Network with 3 branches containing BERT as base architecture <br>
+
+#### Dataset used: **LIAR PLUS** <br>
+
+### Inputs <br>
+&nbsp;&nbsp; **1st Branch** &nbsp;&nbsp;:&nbsp; News Statement <br>
+&nbsp;&nbsp; **2nd Branch** :&nbsp; Justification <br>
+&nbsp;&nbsp; **3rd Branch** &nbsp;:&nbsp; other columns from dataset such as author, source, etc
 <br><br>
 <img src="https://github.com/Siddhesh-Shukla/Fake-News-Detection/blob/main/Images/Model Diagram.png" width="1200"/> 
 
 ## Results
 ### 2-way classification: 
-#### Classes: &nbsp;&nbsp; true, &nbsp;&nbsp; false
+#### &nbsp;&nbsp; **Classes:** &nbsp; true, &nbsp; false
 |               |               |
 | :---          |          ---: |
 | Precision     | 0.731676      |
@@ -21,7 +23,7 @@ Dataset used: **LIAR PLUS** <br>
 | Accuracy      | 73.2439%      |
 
 ### 6-way classification: 
-#### Classes: &nbsp;&nbsp; true, &nbsp;&nbsp; mostly true, &nbsp;&nbsp; half true, &nbsp;&nbsp; barely true, &nbsp;&nbsp; false, &nbsp;&nbsp; pants on fire
+#### &nbsp;&nbsp; **Classes:** &nbsp; true, &nbsp; mostly true, &nbsp; half true, &nbsp; barely true, &nbsp; false, &nbsp; pants on fire
 |               |               |
 | :---          |          ---: |
 | Precision     | 0.329046      |
