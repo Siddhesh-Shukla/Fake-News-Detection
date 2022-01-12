@@ -6,8 +6,8 @@ Dataset used: **LIAR PLUS** <br>
 > 1st Branch - News Statement <br>
 > 2nd Branch - Justification <br>
 > 3rd Branch - other columns from data such as author, source, etc
-
-<img src="https://github.com/Siddhesh-Shukla/Fake-News-Detection/blob/main/Images/Screenshot%202021-12-24%20113507.png" width="500"/> 
+<br><br>
+<img src="https://github.com/Siddhesh-Shukla/Fake-News-Detection/blob/main/Images/Model Diagram.png" width="1200"/> 
 
 ## Results
 ### 2-way classification: 
