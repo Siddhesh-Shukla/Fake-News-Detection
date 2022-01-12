@@ -11,7 +11,7 @@ Dataset used: **LIAR PLUS** <br>
 
 ## Results
 ### 2-way classification: 
-#### &nbsp;&nbsp; true, &nbsp;&nbsp; false
+#### Classes: &nbsp;&nbsp; true, &nbsp;&nbsp; false
 |               |               |
 | :---          |          ---: |
 | Precision     | 0.731676      |
@@ -21,7 +21,7 @@ Dataset used: **LIAR PLUS** <br>
 | Accuracy      | 73.2439%      |
 
 ### 6-way classification: 
-#### &nbsp;&nbsp; true, &nbsp;&nbsp; mostly true, &nbsp;&nbsp; half true, &nbsp;&nbsp; barely true, &nbsp;&nbsp; false, &nbsp;&nbsp; pants on fire
+#### Classes: &nbsp;&nbsp; true, &nbsp;&nbsp; mostly true, &nbsp;&nbsp; half true, &nbsp;&nbsp; barely true, &nbsp;&nbsp; false, &nbsp;&nbsp; pants on fire
 |               |               |
 | :---          |          ---: |
 | Precision     | 0.329046      |
