@@ -13,7 +13,12 @@
 
 ## Results
 ### 2-way classification: 
-#### &nbsp;&nbsp; **Classes:** &nbsp; true, &nbsp; false
+#### Classes
+```
+1. True
+2. False
+```
+
 |               |               |
 | :---          |          ---: |
 | Precision     | 0.731676      |
@@ -23,7 +28,15 @@
 | Accuracy      | 73.2439%      |
 
 ### 6-way classification: 
-#### &nbsp;&nbsp; **Classes:** &nbsp; true, &nbsp; mostly true, &nbsp; half true, &nbsp; barely true, &nbsp; false, &nbsp; pants on fire
+#### Classes 
+```
+1. True
+2. Mostly true
+3. Half true
+4. Barely true
+5. False
+6. Pants on fire
+```
 |               |               |
 | :---          |          ---: |
 | Precision     | 0.329046      |
